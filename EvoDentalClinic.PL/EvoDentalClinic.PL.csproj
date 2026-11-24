@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>773fd0ec-c2e3-4815-8fec-840e28d04a22</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Global\" />
+    <Folder Include="wwwroot\images\branding\" />
+    <Folder Include="wwwroot\images\doctor\" />
+    <Folder Include="wwwroot\images\clinic\" />
+    <Folder Include="wwwroot\images\cases\" />
+    <Folder Include="wwwroot\images\services\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EvoDentalClinic.BLL\EvoDentalClinic.BLL.csproj" />
+  </ItemGroup>
+
+</Project>

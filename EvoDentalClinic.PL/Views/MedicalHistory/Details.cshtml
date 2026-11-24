@@ -1,0 +1,76 @@
+﻿@model EvoDentalClinic.PL.ViewModels.MedicalHistoryDetailsViewModel
+@{
+    ViewData["Title"] = "التاريخ المرضي";
+    var h = Model.History;
+    var findings = new List<string>();
+
+    if (h is not null)
+    {
+        if (h.HasDiabetes) findings.Add("سكر");
+        if (h.HasHeartDisease) findings.Add("أمراض قلب");
+        if (h.HasBloodPressure) findings.Add("ضغط دم");
+        if (h.HasRespiratoryDisease) findings.Add("أمراض تنفس");
+        if (h.HasLiverDisease) findings.Add("أمراض كبد");
+        if (h.HasDrugAllergy)
+            findings.Add("حساسية أدوية" + (h.DrugAllergyType is null ? "" : $": {h.DrugAllergyType}"));
+        if (h.HadRecentDentalVisit)
+            findings.Add("زيارة دكتور أسنان قريباً" + (h.RecentVisitReason is null ? "" : $": {h.RecentVisitReason}"));
+        if (h.HadPreviousExtraction) findings.Add("خلع سابق");
+        if (h.HadAnestheticAllergy) findings.Add("حساسية من البنج (في خلع سابق)");
+        if (h.HadDelayedHealing) findings.Add("بطء التئام الجرح (في خلع سابق)");
+        if (h.HadBleeding) findings.Add("نزيف (في خلع سابق)");
+        if (h.HadFainting) findings.Add("إغماء (في خلع سابق)");
+        if (h.HadPreviousProsthetics)
+            findings.Add("تركيبات سابقة" + (h.ProstheticsType is null ? "" : $": {h.ProstheticsType}"));
+        if (h.HadRadiationOrChemo) findings.Add("علاج إشعاعي أو كيماوي");
+        if (h.IsPregnant) findings.Add("حامل");
+        if (h.IsBreastfeeding) findings.Add("مرضعة");
+    }
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h2 class="mb-1">التاريخ المرضي</h2>
+        <p class="text-muted mb-0">المريض: <strong>@Model.PatientName</strong></p>
+    </div>
+
+    <a asp-action="Edit" asp-route-patientId="@Model.PatientId" class="btn btn-primary">
+        @(h is null ? "تسجيل التاريخ المرضي" : "تعديل")
+    </a>
+</div>
+
+@if (h is null)
+{
+    <div class="alert alert-light border">لسه ما اتسجلش تاريخ مرضي للمريض ده.</div>
+}
+else
+{
+    @if (findings.Any())
+    {
+        <div class="card mb-3">
+            <div class="card-header">الحالات المسجلة</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var f in findings)
+                {
+                    <li class="list-group-item">@f</li>
+                }
+            </ul>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-success">مفيش أي حالات مرضية مسجلة.</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(h.Notes))
+    {
+        <div class="card">
+            <div class="card-header">ملاحظات طبية أخرى</div>
+            <div class="card-body">@h.Notes</div>
+        </div>
+    }
+}
+
+<div class="mt-4">
+    <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-link">رجوع لملف المريض</a>
+</div>

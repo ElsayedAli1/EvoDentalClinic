@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="gitignore.sln" />
+  </Folder>
+  <Project Path="EvoDentalClinic.BLL/EvoDentalClinic.BLL.csproj" />
+  <Project Path="EvoDentalClinic.DAL/EvoDentalClinic.DAL.csproj" />
+  <Project Path="EvoDentalClinic.PL/EvoDentalClinic.PL.csproj" />
+</Solution>

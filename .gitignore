@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Build files
+bin/
+obj/
+
+# Publish
+publish/
+
+# User files
+*.userosscache
+*.sln.docstates
+
+# Secrets
+appsettings.Development.json
+
+# Logs
+*.log
+EvoDentalClinic.PL/appsettings.json
+EvoDentalClinic.PL/appsettings.Production.json

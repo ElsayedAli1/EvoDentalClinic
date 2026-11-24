@@ -1,0 +1,160 @@
+﻿@model EvoDentalClinic.BLL.DTOs.Dashboard.DashboardDto
+@using EvoDentalClinic.DAL.Enums
+@{
+    ViewData["Title"] = "الرئيسية";
+    var next = Model.Next;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h2 class="mb-1">النهاردة</h2>
+        <p class="text-muted mb-0">@Model.Date.ToArabicDate()</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Patients" asp-action="Create" class="btn btn-primary">مريض جديد</a>
+        <a asp-controller="Appointments" asp-action="Index" class="btn btn-outline-secondary">كل الحجوزات</a>
+    </div>
+</div>
+
+<form asp-controller="Patients" asp-action="Index" method="get" class="row g-2 mb-4">
+    <div class="col-md-8">
+        <input type="text" name="term" class="form-control"
+               placeholder="ابحث عن مريض بالاسم أو الموبايل أو الكود" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary">بحث</button>
+    </div>
+</form>
+@if (Model.PendingReviews is > 0)
+{
+    <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>فيه <strong>@Model.PendingReviews</strong> رأي مستني مراجعتك.</span>
+        <a asp-controller="ReviewModeration" asp-action="Index" class="btn btn-primary btn-sm">راجع الآراء</a>
+    </div>
+}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">حجوزات النهاردة</div>
+                <div class="fs-3 fw-bold">@Model.TotalCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">في الانتظار</div>
+                <div class="fs-3 fw-bold text-primary">@Model.WaitingCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">تم الكشف</div>
+                <div class="fs-3 fw-bold text-success">@Model.CompletedCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">لم يحضر</div>
+                <div class="fs-3 fw-bold text-warning">@Model.NoShowCount</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Finance is not null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted small">إيراد النهاردة</div>
+                    <div class="fs-4 fw-bold text-success">@Model.Finance.IncomeToday.ToMoney()</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Reports" asp-action="Outstanding" class="text-decoration-none text-reset">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="text-muted small">إجمالي المتبقي على المرضى</div>
+                        <div class="fs-4 fw-bold text-danger">@Model.Finance.OutstandingBalance.ToMoney()</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted small">مرضى عليهم متبقي</div>
+                    <div class="fs-4 fw-bold">@Model.Finance.PatientsWithBalance</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card mb-4 border-primary">
+    <div class="card-body">
+        <div class="text-muted small mb-1">التالي في الدور</div>
+        @if (next is null)
+        {
+            <div>مفيش حجوزات منتظرة النهاردة.</div>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <span class="fs-4 fw-bold">@next.StartTime.ToArabicTime()</span>
+                    <span class="fs-5 ms-2">@next.PatientFullName</span>
+                    <span dir="ltr" class="text-muted ms-2">@next.PatientPhone</span>
+                </div>
+                <a asp-controller="Patients" asp-action="Details" asp-route-id="@next.PatientId"
+                   class="btn btn-primary">فتح الملف</a>
+            </div>
+        }
+    </div>
+</div>
+
+<h4 class="mb-2">حجوزات النهاردة</h4>
+
+@{
+    var active = Model.Appointments.Where(a => a.Status != AppointmentStatus.Cancelled).ToList();
+}
+
+@if (!active.Any())
+{
+    <div class="alert alert-light border">مفيش حجوزات النهاردة.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>الميعاد</th>
+                    <th>المريض</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in active)
+                {
+                    <tr>
+                        <td>@a.StartTime.ToArabicTime()</td>
+                        <td>
+                            <a asp-controller="Patients" asp-action="Details" asp-route-id="@a.PatientId"
+                               class="text-decoration-none">@a.PatientFullName</a>
+                        </td>
+                        <td><span class="badge @a.Status.ToBadgeClass()">@a.Status.ToArabic()</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

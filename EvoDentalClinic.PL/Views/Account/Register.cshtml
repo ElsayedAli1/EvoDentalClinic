@@ -1,0 +1,81 @@
+﻿@model EvoDentalClinic.PL.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "إنشاء حساب";
+}
+
+<div class="auth-card wide">
+    <img src="~/images/branding/logo.png" alt="" class="auth-logo" onerror="this.remove()" />
+    <h2 class="auth-title">إنشاء حساب</h2>
+    <p class="auth-sub">عشان تحجز وتتابع مواعيدك.</p>
+
+    <form asp-action="Register" method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label asp-for="FullName" class="form-label"></label>
+                <input asp-for="FullName" class="form-control" autocomplete="name" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" type="tel" class="form-control" placeholder="01012345678" autocomplete="tel" />
+                <div class="form-text">هتسجّل دخول بيه.</div>
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" type="email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="Gender" class="form-label"></label>
+                <select asp-for="Gender" class="form-select">
+                    <option value="">اختار...</option>
+                    <option value="1">ذكر</option>
+                    <option value="2">أنثى</option>
+                </select>
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-3">
+                <label asp-for="DateOfBirth" class="form-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" />
+                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control ltr-input" autocomplete="new-password" />
+                <div class="form-text">8 حروف على الأقل وفيها رقم.</div>
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control ltr-input" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="showPw"
+                           data-toggle-password="#Password,#ConfirmPassword" />
+                    <label class="form-check-label" for="showPw">إظهار كلمة المرور</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 d-flex flex-wrap align-items-center gap-2">
+            <button type="submit" class="btn btn-primary btn-shine">إنشاء الحساب</button>
+            <a asp-action="Login" class="btn btn-link">عندي حساب</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

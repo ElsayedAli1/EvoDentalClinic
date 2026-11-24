@@ -1,0 +1,49 @@
+﻿@model EvoDentalClinic.PL.ViewModels.BookAppointmentViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "حجز موعد";
+}
+
+<h2 class="mb-1">حجز موعد</h2>
+<p class="text-muted">مواعيد الكشف نص ساعة، من السبت للخميس.</p>
+
+<form method="get" asp-action="Book" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <input type="date" name="date" value="@Model.Date.ToIso()" min="@Model.MinDate.ToIso()"
+               class="form-control" onchange="this.form.submit()" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary">عرض المواعيد</button>
+    </div>
+</form>
+
+<h5 class="mb-3">@Model.Date.ToArabicDate()</h5>
+
+@if (!Model.Slots.Any())
+{
+    <div class="alert alert-warning">
+        مفيش مواعيد متاحة في اليوم ده. ممكن يكون إجازة، أو كل المواعيد اتحجزت. جرّب يوم تاني.
+    </div>
+}
+else
+{
+    <form asp-action="Book" method="post">
+        <input type="hidden" name="date" value="@Model.Date.ToIso()" />
+
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var slot in Model.Slots)
+            {
+                <button type="submit" name="startTime"
+                        value="@slot.ToString("HH:mm", CultureInfo.InvariantCulture)"
+                        class="btn btn-outline-primary"
+                        onclick="return confirm('تأكيد حجز موعد @Model.Date.ToArabicDate() الساعة @slot.ToArabicTime()؟');">
+                    @slot.ToArabicTime()
+                </button>
+            }
+        </div>
+    </form>
+}
+
+<div class="mt-4">
+    <a asp-action="Index" class="btn btn-link">رجوع لمواعيدي</a>
+</div>

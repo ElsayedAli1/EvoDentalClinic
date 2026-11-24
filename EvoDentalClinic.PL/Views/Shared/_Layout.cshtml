@@ -1,0 +1,268 @@
+﻿@using Microsoft.Extensions.Options
+@using EvoDentalClinic.PL.Config
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject IOptions<ClinicInfoOptions> Clinic
+@{
+    var c = Clinic.Value;
+    var siteBase = c.SiteBase;
+    var allowIndex = ViewData["AllowIndex"] as bool? == true;
+    var description = ViewData["Description"] as string
+                      ?? $"{c.Name} - {c.DoctorName}، {c.DoctorTitle}. احجز موعدك أونلاين.";
+    var canonical = allowIndex && siteBase is not null ? siteBase + "/" : null;
+    var hasFavicon = Env.WebRootFileProvider.GetFileInfo("images/branding/favicon.png").Exists;
+    var hasShare = Env.WebRootFileProvider.GetFileInfo("images/branding/share.jpg").Exists;
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    var isAuth = User.Identity?.IsAuthenticated == true;
+    var isDoctor = User.IsInRole("Doctor");
+    var isStaff = isDoctor || User.IsInRole("Receptionist");
+    var isPatient = User.IsInRole("Patient");
+
+    var fullWidth = ViewData["FullWidth"] as bool? == true;
+
+    // أزرار التواصل: للزائر والمريض بس، ومش في صفحات الدخول والتسجيل
+    var showContactTools = !isStaff &&
+                           !string.Equals(ctrl, "Account", StringComparison.OrdinalIgnoreCase);
+
+    var bookUrl = isPatient
+        ? Url.Action("Book", "Portal")
+        : Url.Action("Register", "Account");
+
+    var okMsg = TempData["Success"] as string;
+    var errMsg = TempData["Error"] as string;
+
+    Func<string, string> active = name =>
+        string.Equals(ctrl, name, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - @c.EnglishName</title>
+    <meta name="description" content="@description" />
+    <meta name="theme-color" content="#0a2a66" />
+
+    @if (allowIndex)
+    {
+        <meta name="robots" content="index, follow" />
+    }
+    else
+    {
+        <meta name="robots" content="noindex, nofollow" />
+    }
+
+    @if (canonical is not null)
+    {
+        <link rel="canonical" href="@canonical" />
+    }
+
+    @if (hasFavicon)
+    {
+        <link rel="icon" type="image/png" href="~/images/branding/favicon.png" />
+        <link rel="apple-touch-icon" href="~/images/branding/favicon.png" />
+    }
+
+    @if (allowIndex)
+    {
+        <meta property="og:type" content="website" />
+        <meta property="og:locale" content="ar_EG" />
+        <meta property="og:site_name" content="@c.Name" />
+        <meta property="og:title" content="@ViewData["Title"]" />
+        <meta property="og:description" content="@description" />
+
+        @if (canonical is not null)
+        {
+            <meta property="og:url" content="@canonical" />
+        }
+
+        @if (hasShare && siteBase is not null)
+        {
+            <meta property="og:image" content="@(siteBase)/images/branding/share.jpg" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta name="twitter:card" content="summary_large_image" />
+        }
+    }
+
+    @RenderSection("Head", required: false)
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.rtl.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="d-flex flex-column min-vh-100 @(showContactTools ? "has-mobile-bar" : "")">
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg evo-nav">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/branding/logo.png" alt="@c.Name" class="evo-logo" onerror="this.remove()" />
+                    <span class="fw-bold evo-brand-text d-none d-sm-inline">@c.Name</span>
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mainNav" aria-controls="mainNav"
+                        aria-expanded="false" aria-label="القائمة">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto align-items-lg-center">
+                        @if (!isStaff)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="top">الرئيسية</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="services">خدماتنا</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="doctor">الدكتور</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="cases">الحالات</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="reviews">آراء المرضى</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index" asp-fragment="contact">تواصل معانا</a></li>
+                        }
+
+                        @if (isPatient)
+                        {
+                            <li class="nav-item"><a class="nav-link @active("Portal")" asp-controller="Portal" asp-action="Index">مواعيدي</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Portal" asp-action="Book">حجز موعد</a></li>
+                        }
+
+                        @if (isStaff)
+                        {
+                            <li class="nav-item"><a class="nav-link @active("Home")" asp-controller="Home" asp-action="Index">الرئيسية</a></li>
+                            <li class="nav-item"><a class="nav-link @active("Patients")" asp-controller="Patients" asp-action="Index">المرضى</a></li>
+                            <li class="nav-item"><a class="nav-link @active("Appointments")" asp-controller="Appointments" asp-action="Index">الحجوزات</a></li>
+                        }
+
+                        @if (isDoctor)
+                        {
+                            <li class="nav-item"><a class="nav-link @active("Reports")" asp-controller="Reports" asp-action="Income">التقارير</a></li>
+                            <li class="nav-item"><a class="nav-link @active("ReviewModeration")" asp-controller="ReviewModeration" asp-action="Index">الآراء</a></li>
+                            <li class="nav-item"><a class="nav-link @active("Staff")" asp-controller="Staff" asp-action="Index">الموظفين</a></li>
+                            <li class="nav-item"><a class="nav-link @active("ClinicSettings")" asp-controller="ClinicSettings" asp-action="Index">الإعدادات</a></li>
+                        }
+                    </ul>
+
+                    <div class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                        @if (isAuth)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span dir="ltr">@User.Identity!.Name</span>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    @if (isPatient)
+                                    {
+                                        <li><a class="dropdown-item" asp-controller="Review" asp-action="Index">قيّم العيادة</a></li>
+                                    }
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Profile" asp-action="ChangePassword">تغيير كلمة المرور</a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">تسجيل الخروج</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">تسجيل الدخول</a>
+                            <a class="btn btn-primary btn-sm" asp-controller="Account" asp-action="Register">احجز موعدك</a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    @if (okMsg is not null || errMsg is not null)
+    {
+        <div class="container mt-3">
+            @if (okMsg is not null)
+            {
+                <div class="alert alert-success mb-0">@okMsg</div>
+            }
+            @if (errMsg is not null)
+            {
+                <div class="alert alert-danger mb-0 mt-2">@errMsg</div>
+            }
+        </div>
+    }
+
+    @if (fullWidth)
+    {
+        <main id="top">@RenderBody()</main>
+    }
+    else
+    {
+        <main class="container py-4">@RenderBody()</main>
+    }
+
+    <footer class="evo-footer mt-auto">
+        <div class="container py-5">
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <h5 class="mb-2">@c.Name</h5>
+                    <p class="mb-1">@c.DoctorName</p>
+                    <p class="mb-0 small">@c.Address</p>
+                </div>
+
+                <div class="col-md-4">
+                    <h5 class="mb-2">تواصل معانا</h5>
+                    <p class="mb-1"><a href="tel:@c.Phone" dir="ltr">@c.Phone</a> (اتصال)</p>
+                    <p class="mb-2"><a href="@c.WhatsAppLink" target="_blank" rel="noopener" dir="ltr">@c.WhatsApp</a> (واتساب)</p>
+
+                    @if (!string.IsNullOrWhiteSpace(c.FacebookUrl))
+                    {
+                        <a href="@c.FacebookUrl" target="_blank" rel="noopener" class="d-inline-flex align-items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z" />
+                            </svg>
+                            صفحتنا على فيسبوك
+                        </a>
+                    }
+                </div>
+
+                <div class="col-md-3">
+                    <h5 class="mb-2">روابط سريعة</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li><a asp-controller="Home" asp-action="Index">الرئيسية</a></li>
+                        @if (!isAuth)
+                        {
+                            <li><a asp-controller="Account" asp-action="Login">تسجيل الدخول</a></li>
+                            <li><a asp-controller="Account" asp-action="Register">إنشاء حساب</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <div class="text-center small">© @DateTime.Now.Year @c.Name</div>
+        </div>
+    </footer>
+
+    @if (showContactTools)
+    {
+        <a href="@c.WhatsAppBookingLink" target="_blank" rel="noopener" class="wa-float"
+           aria-label="تواصل معانا على واتساب">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.06 3.966L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
+            </svg>
+        </a>
+
+        <div class="mobile-bar d-lg-none">
+            <a href="tel:@c.Phone" class="btn btn-outline-primary">اتصل بنا</a>
+            <a href="@bookUrl" class="btn btn-primary">احجز موعدك</a>
+        </div>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

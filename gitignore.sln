@@ -1,0 +1,8 @@
+appsettings.Production.json
+App_Data/
+logs/
+publish/
+EvoDentalClinic.PL/wwwroot/images/cases/*
+EvoDentalClinic.PL/wwwroot/images/doctor/*
+!EvoDentalClinic.PL/wwwroot/images/cases/.gitkeep
+!EvoDentalClinic.PL/wwwroot/images/doctor/.gitkeep

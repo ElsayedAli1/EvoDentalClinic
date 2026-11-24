@@ -1,0 +1,69 @@
+﻿@model List<EvoDentalClinic.BLL.DTOs.Reports.OutstandingPatientDto>
+@{
+    ViewData["Title"] = "المتبقي على المرضى";
+}
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item"><a class="nav-link" asp-action="Income">الإيراد</a></li>
+    <li class="nav-item"><a class="nav-link active" asp-action="Outstanding">المتبقي على المرضى</a></li>
+</ul>
+
+<h2 class="mb-3">المتبقي على المرضى</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-success">مفيش أي مريض عليه متبقي.</div>
+}
+else
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted small">إجمالي المتبقي</div>
+                    <div class="fs-3 fw-bold text-danger">@Model.Sum(x => x.Balance).ToMoney()</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="text-muted small">عدد المرضى</div>
+                    <div class="fs-3 fw-bold">@Model.Count</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>المريض</th>
+                    <th>الموبايل</th>
+                    <th>التكلفة</th>
+                    <th>المدفوع</th>
+                    <th>المتبقي</th>
+                    <th>آخر دفعة</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Patients" asp-action="Details" asp-route-id="@p.PatientId"
+                               class="text-decoration-none">@p.FullName</a>
+                            <div class="text-muted small">@p.Code</div>
+                        </td>
+                        <td dir="ltr" class="text-end">@p.Phone</td>
+                        <td>@p.TotalCost.ToMoney()</td>
+                        <td>@p.TotalPaid.ToMoney()</td>
+                        <td class="text-danger fw-bold">@p.Balance.ToMoney()</td>
+                        <td>@(p.LastPaymentAt is null ? "لسه ما دفعش" : p.LastPaymentAt.Value.ToCairoDateTime())</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

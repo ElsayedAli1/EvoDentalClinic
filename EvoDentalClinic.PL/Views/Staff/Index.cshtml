@@ -1,0 +1,61 @@
+﻿@model IEnumerable<EvoDentalClinic.BLL.DTOs.Staff.StaffDto>
+@using EvoDentalClinic.DAL.Constants
+@{
+    ViewData["Title"] = "الموظفين";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">الموظفين</h2>
+    <a asp-action="Create" class="btn btn-primary">إضافة موظف استقبال</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle bg-white">
+        <thead>
+            <tr>
+                <th>الاسم</th>
+                <th>الإيميل</th>
+                <th>الدور</th>
+                <th>الحالة</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                <tr class="@(s.IsActive ? "" : "text-muted")">
+                    <td>@s.FullName</td>
+                    <td dir="ltr" class="text-end">@s.Email</td>
+                    <td>@(s.Role == Roles.Doctor ? "دكتور" : "موظف استقبال")</td>
+                    <td>
+                        @if (s.IsActive)
+                        {
+                            <span class="badge bg-success">نشط</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">موقوف</span>
+                        }
+                    </td>
+                    <td class="text-end text-nowrap">
+                        @if (s.Role == Roles.Receptionist)
+                        {
+                            <a asp-action="ResetPassword" asp-route-id="@s.Id"
+                               class="btn btn-outline-secondary btn-sm">تغيير الباسورد</a>
+
+                            <form asp-action="SetActive" method="post" class="d-inline"
+                                  onsubmit="return confirm('@(s.IsActive ? "متأكد إنك عايز توقف الحساب ده؟" : "متأكد إنك عايز تفعّل الحساب ده؟")');">
+                                <input type="hidden" name="id" value="@s.Id" />
+                                <input type="hidden" name="active" value="@((!s.IsActive).ToString().ToLower())" />
+                                <button type="submit"
+                                        class="btn btn-sm @(s.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(s.IsActive ? "إيقاف" : "تفعيل")
+                                </button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

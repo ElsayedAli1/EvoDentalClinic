@@ -1,0 +1,107 @@
+﻿@model EvoDentalClinic.PL.ViewModels.ReviewFormViewModel
+@using EvoDentalClinic.DAL.Enums
+@{
+    ViewData["Title"] = "قيّم العيادة";
+    var rating = Model.Rating ?? 0;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <h2 class="mb-1">قيّم العيادة</h2>
+        <p class="text-muted">رأيك بيساعد مرضى تانيين، وهيظهر باسمك الأول بس بعد ما الدكتور يراجعه.</p>
+
+        @if (Model.HasReview && Model.CurrentStatus is not null)
+        {
+            <div class="alert alert-light border d-flex align-items-center gap-2">
+                <span class="badge @Model.CurrentStatus.Value.ToBadgeClass()">@Model.CurrentStatus.Value.ToArabic()</span>
+                <span class="small">
+                    @switch (Model.CurrentStatus)
+                    {
+                        case ReviewStatus.Pending:
+                            <text>رأيك مستني مراجعة الدكتور.</text>
+                            break;
+                        case ReviewStatus.Approved:
+                            <text>رأيك منشور على الموقع. لو عدّلته هيرجع للمراجعة.</text>
+                            break;
+                        case ReviewStatus.Rejected:
+                            <text>الرأي ده ما اتنشرش. تقدر تعدّله وتبعته تاني.</text>
+                            break;
+                    }
+                </span>
+            </div>
+        }
+
+        <form asp-action="Index" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label class="form-label d-block">تقييمك</label>
+                <input type="hidden" asp-for="Rating" />
+                <div class="star-input" role="group" aria-label="التقييم">
+                    @for (var i = 1; i <= 5; i++)
+                    {
+                        <button type="button" class="star-btn @(i <= rating ? "is-on" : "")"
+                                data-value="@i" aria-label="@i من 5">
+                            ★
+                        </button>
+                    }
+                </div>
+                <div><span asp-validation-for="Rating" class="text-danger"></span></div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Comment" class="form-label"></label>
+                <textarea asp-for="Comment" class="form-control" rows="5" maxlength="600"
+                          placeholder="احكي تجربتك مع العيادة والدكتور"></textarea>
+                <div class="d-flex justify-content-between">
+                    <span asp-validation-for="Comment" class="text-danger"></span>
+                    <span id="commentCount" class="text-muted small"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">@(Model.HasReview ? "حفظ التعديل" : "إرسال الرأي")</button>
+            <a asp-controller="Portal" asp-action="Index" class="btn btn-link">رجوع</a>
+        </form>
+
+        @if (Model.HasReview)
+        {
+            <form asp-action="Delete" method="post" class="mt-4"
+                  onsubmit="return confirm('متأكد إنك عايز تمسح رأيك؟');">
+                <button type="submit" class="btn btn-outline-danger btn-sm">مسح رأيي</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var input = document.getElementById('Rating');
+            var stars = document.querySelectorAll('.star-btn');
+            var area = document.getElementById('Comment');
+            var counter = document.getElementById('commentCount');
+
+            function paint(value) {
+                stars.forEach(function (s) {
+                    var v = Number(s.dataset.value);
+                    s.classList.toggle('is-on', v <= value);
+                    s.setAttribute('aria-pressed', v === value ? 'true' : 'false');
+                });
+            }
+
+            stars.forEach(function (s) {
+                s.addEventListener('click', function () {
+                    input.value = s.dataset.value;
+                    paint(Number(s.dataset.value));
+                });
+            });
+
+            function count() { counter.textContent = area.value.length + ' / 600'; }
+            area.addEventListener('input', count);
+
+            paint(Number(input.value) || 0);
+            count();
+        })();
+    </script>
+}

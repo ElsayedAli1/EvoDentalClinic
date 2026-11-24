@@ -1,0 +1,83 @@
+﻿@model EvoDentalClinic.PL.ViewModels.PortalIndexViewModel
+@using EvoDentalClinic.DAL.Enums
+@{
+    ViewData["Title"] = "مواعيدي";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h2 class="mb-1">أهلاً @Model.PatientName</h2>
+        <p class="text-muted mb-0">مواعيدك في عيادة EVO Dental Clinic</p>
+    </div>
+    <a asp-action="Book" class="btn btn-primary">حجز موعد جديد</a>
+</div>
+
+<h4 class="mb-2">حجوزاتي القادمة</h4>
+
+@if (!Model.Upcoming.Any())
+{
+    <div class="alert alert-light border">مفيش حجوزات قادمة.</div>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>اليوم</th>
+                    <th>الميعاد</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Upcoming)
+                {
+                    <tr>
+                        <td>@a.Date.ToArabicDate()</td>
+                        <td>@a.StartTime.ToArabicTime()</td>
+                        <td class="text-end">
+                            <form asp-action="Cancel" method="post" class="d-inline"
+                                  onsubmit="return confirm('متأكد إنك عايز تلغي الحجز؟');">
+                                <input type="hidden" name="id" value="@a.Id" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm">إلغاء</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h4 class="mb-2">حجوزات سابقة</h4>
+
+@if (!Model.Past.Any())
+{
+    <div class="alert alert-light border">مفيش حجوزات سابقة.</div>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>اليوم</th>
+                    <th>الميعاد</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Past)
+                {
+                    <tr class="@(a.Status == AppointmentStatus.Cancelled ? "text-muted" : "")">
+                        <td>@a.Date.ToArabicDate()</td>
+                        <td>@a.StartTime.ToArabicTime()</td>
+                        <td><span class="badge @a.Status.ToBadgeClass()">@a.Status.ToArabic()</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+<p><a asp-controller="Review" asp-action="Index" class="btn btn-outline-primary btn-sm">قيّم العيادة</a></p>
+<p class="text-muted small">لتعديل ميعاد قريب أو أي استفسار، كلّم العيادة: 01040422294 - 01515981450</p>

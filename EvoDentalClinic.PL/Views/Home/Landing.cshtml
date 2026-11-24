@@ -1,0 +1,450 @@
+﻿@model EvoDentalClinic.PL.ViewModels.LandingViewModel
+@using System.Globalization
+@using System.Text.Json
+@inject Microsoft.Extensions.Options.IOptions<EvoDentalClinic.PL.Config.ClinicInfoOptions> Clinic
+@{
+    var c = Clinic.Value;
+    var s = Model.Settings;
+    var images = Model.ClinicImages;
+    var hasSlider = images.Any();
+    var cases = Model.CaseImages;
+    const int casesVisible = 6;
+    var reviews = Model.Reviews;
+
+    // الزائر بيروح للتسجيل، والمريض المسجّل بيروح لحجز الموعد مباشرة
+    var isPatient = User.IsInRole("Patient");
+    var bookUrl = isPatient
+        ? Url.Action("Book", "Portal")
+        : Url.Action("Register", "Account");
+
+    ViewData["Title"] = c.Name;
+    ViewData["FullWidth"] = true;
+    ViewData["AllowIndex"] = true;
+
+    var hoursText = s is not null && s.WorkDays.Any()
+        ? $" مواعيد العيادة {s.WorkDays.ToArabicRange()} من {s.OpenTime.ToArabicTime()} إلى {s.CloseTime.ToArabicTime()}."
+        : "";
+    ViewData["Description"] = $"{c.Name} - {c.DoctorName}، {c.DoctorTitle}.{hoursText} احجز موعدك أونلاين.";
+
+    // بيانات منظمة لجوجل (JSON-LD)
+    var siteBase = c.SiteBase;
+    var schema = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "Dentist",
+        ["name"] = c.Name,
+        ["alternateName"] = c.EnglishName,
+        ["telephone"] = c.PhoneInternational,
+        ["address"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "PostalAddress",
+            ["streetAddress"] = c.Address,
+            ["addressCountry"] = "EG"
+        }
+    };
+
+    if (siteBase is not null)
+    {
+        schema["url"] = siteBase + "/";
+
+        if (hasSlider)
+        {
+            schema["image"] = images.Take(3)
+                .Select(i => siteBase + Url.Content("~/images/clinic/" + Uri.EscapeDataString(i)))
+                .ToArray();
+        }
+    }
+
+    if (!string.IsNullOrWhiteSpace(c.FacebookUrl))
+        schema["sameAs"] = new[] { c.FacebookUrl };
+
+    if (s is not null && s.WorkDays.Any())
+    {
+        schema["openingHoursSpecification"] = new[]
+        {
+            new Dictionary<string, object?>
+            {
+                ["@type"] = "OpeningHoursSpecification",
+                ["dayOfWeek"] = s.WorkDays.Select(d => d.ToString()).ToArray(),
+                ["opens"] = s.OpenTime.ToString("HH:mm", CultureInfo.InvariantCulture),
+                ["closes"] = s.CloseTime.ToString("HH:mm", CultureInfo.InvariantCulture)
+            }
+        };
+    }
+
+    var schemaJson = JsonSerializer.Serialize(schema);
+}
+
+@section Head {
+    <noscript>
+        <style>
+                .reveal, .hero-in {
+                    opacity: 1;
+                    transform: none;
+            }</style>
+        </noscript>
+        <script type="application/ld+json">@Html.Raw(schemaJson)</script>
+    }
+    <section class="hero-evo">
+        <partial name="_FloatingTeeth" />
+        <div class="container">
+            <div class="row align-items-center g-4 g-lg-5">
+
+                <div class="@(hasSlider ? "col-lg-6" : "col-lg-8 mx-auto text-center")">
+                    <h1 class="display-5 fw-bold mb-1 hero-in d1">@c.Name</h1>
+                    <p class="hero-en mb-3 hero-in d1">@c.EnglishName</p>
+
+                    <p class="hero-lead mb-4 hero-in d2">
+                        كشف وعلاج الأسنان  @c.DoctorName، @c.DoctorTitle.
+                        احجز ميعادك من موبايلك في دقيقة.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4 hero-in d3 @(hasSlider ? "" : "justify-content-center")">
+                        <a href="@bookUrl" class="btn btn-light btn-lg fw-bold text-evo btn-pulse">احجز موعدك</a>
+
+                        @if (isPatient)
+                        {
+                            <a asp-controller="Portal" asp-action="Index" class="btn btn-outline-light btn-lg">مواعيدي</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-light btn-lg">عندي حساب</a>
+                        }
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 hero-in d4 @(hasSlider ? "" : "justify-content-center")">
+                        @if (s is not null && s.WorkDays.Any())
+                        {
+                            <span class="hero-chip">@s.WorkDays.ToArabicRange() - من @s.OpenTime.ToArabicTime() إلى @s.CloseTime.ToArabicTime()</span>
+                        }
+                        <span class="hero-chip"><a href="tel:@c.Phone" dir="ltr">@c.Phone</a></span>
+                    </div>
+                </div>
+
+                @if (hasSlider)
+                {
+                    <div class="col-lg-6 hero-in d3">
+                        <div id="clinicCarousel" class="carousel slide carousel-fade hero-carousel"
+                             data-bs-ride="carousel" data-bs-interval="4000" aria-label="صور من داخل العيادة">
+
+                            @if (images.Count > 1)
+                            {
+                                <div class="carousel-indicators">
+                                    @for (var i = 0; i < images.Count; i++)
+                                    {
+                                        <button type="button" data-bs-target="#clinicCarousel" data-bs-slide-to="@i"
+                                                class="@(i == 0 ? "active" : "")"
+                                                aria-current="@(i == 0 ? "true" : "false")"
+                                                aria-label="صورة @(i + 1)"></button>
+                                    }
+                                </div>
+                            }
+
+                            <div class="carousel-inner">
+                                @for (var i = 0; i < images.Count; i++)
+                                {
+                                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                                        <img src="@Url.Content("~/images/clinic/" + Uri.EscapeDataString(images[i]))"
+                                             class="d-block w-100 hero-slide"
+                                             alt="صورة من داخل @c.Name"
+                                             loading="@(i == 0 ? "eager" : "lazy")" />
+                                    </div>
+                                }
+                            </div>
+
+                            @if (images.Count > 1)
+                            {
+                                <button class="carousel-control-prev" type="button" data-bs-target="#clinicCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">السابق</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#clinicCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">التالي</span>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    @if (c.Services.Any())
+    {
+        <section id="services" class="section section-white">
+            <div class="container">
+                <h2 class="section-title">خدماتنا</h2>
+                <div class="row g-3">
+                    @foreach (var service in c.Services)
+                    {
+                        <div class="col-sm-6 col-lg-3 reveal">
+                            <div class="card service-card h-100">
+                                <div class="card-body d-flex align-items-center gap-3">
+                                    <div class="service-icon">
+                                        <partial name="_ServiceIcon" model="service.Icon" />
+                                    </div>
+                                    <div class="service-name">@service.Name</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="@bookUrl" class="btn btn-primary btn-shine">احجز موعدك</a>
+                </div>
+            </div>
+        </section>
+    }
+
+    <section id="doctor" class="section">
+        <div class="container">
+            <h2 class="section-title">الدكتور</h2>
+
+            <div class="row align-items-center justify-content-center g-4 g-lg-5 reveal">
+                <div class="col-md-5 col-lg-4 text-center">
+                    @if (Model.DoctorImage is not null)
+                    {
+                        <img src="@Url.Content("~/images/doctor/" + Uri.EscapeDataString(Model.DoctorImage))"
+                             alt="@c.DoctorName" class="doctor-photo" loading="lazy" />
+                    }
+                    else
+                    {
+                        <div class="doctor-photo-placeholder mx-auto">
+                            <partial name="_ServiceIcon" model="@("tooth")" />
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-7 col-lg-6">
+                    <div class="fs-2 fw-bold text-evo">@c.DoctorName</div>
+                    <div class="fs-5 text-muted mb-3">@c.DoctorTitle</div>
+                    <p class="mb-4">احجز كشفك من الموقع في دقيقة، أو كلّم العيادة على الرقم.</p>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="@bookUrl" class="btn btn-primary btn-shine">احجز موعدك</a>
+                        <a href="tel:@c.Phone" class="btn btn-outline-primary" dir="ltr">@c.Phone</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (cases.Any())
+    {
+        <section id="cases" class="section">
+            <div class="container">
+                <h2 class="section-title">حالات من عيادتنا</h2>
+
+                <div class="row g-3">
+                    @for (var i = 0; i < cases.Count; i++)
+                    {
+                        var src = Url.Content("~/images/cases/" + Uri.EscapeDataString(cases[i]));
+
+                        <div class="col-sm-6 col-lg-4 @(i < casesVisible ? "reveal" : "d-none case-extra")">
+                            <button type="button" class="case-card" data-index="@i" data-src="@src"
+                                    aria-label="تكبير الحالة رقم @(i + 1)">
+                                <img src="@src" alt="حالة رقم @(i + 1) قبل وبعد العلاج" loading="lazy" />
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @if (cases.Count > casesVisible)
+                {
+                    <div class="text-center mt-4">
+                        <button type="button" id="casesMore" class="btn btn-outline-primary">
+                            عرض المزيد (@(cases.Count - casesVisible))
+                        </button>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <div class="modal fade case-modal" id="caseModal" tabindex="-1" aria-label="صورة الحالة" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="position-relative">
+                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2"
+                                style="z-index:3" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+
+                        <img id="caseModalImg" class="case-modal-img" alt="" />
+
+                        <button type="button" id="casePrev" class="case-nav pos-right" aria-label="السابق">&rsaquo;</button>
+                        <button type="button" id="caseNext" class="case-nav pos-left" aria-label="التالي">&lsaquo;</button>
+                    </div>
+                    <div id="caseCounter" class="text-center text-white mt-2 small"></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <section id="reviews" class="section">
+        <div class="container">
+            <h2 class="section-title">آراء المرضى</h2>
+
+            @if (reviews is not null && reviews.Items.Any())
+            {
+                var avgStars = (int)Math.Round(reviews.Average, MidpointRounding.AwayFromZero);
+
+                <div class="text-center mb-4 reveal">
+                    <div class="fs-1 fw-bold text-evo">@reviews.Average.ToString("0.0", CultureInfo.InvariantCulture)</div>
+                    <partial name="_Stars" model="avgStars" />
+                    <div class="text-muted small mt-1">من @reviews.TotalCount تقييم</div>
+                </div>
+
+                <div class="row g-3">
+                    @foreach (var r in reviews.Items)
+                    {
+                        <div class="col-md-6 col-lg-4 reveal">
+                            <div class="card review-card h-100">
+                                <div class="card-body">
+                                    <partial name="_Stars" model="r.Rating" />
+                                    <p class="review-text mt-2 mb-3">@r.Comment</p>
+                                    <div class="fw-bold text-evo">@r.DisplayName</div>
+                                    <div class="text-muted small">@r.CreatedAt.ToCairoDate()</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-center text-muted">لسه مفيش آراء منشورة.</p>
+            }
+
+            <div class="text-center mt-4">
+                <a asp-controller="Review" asp-action="Index" class="btn btn-primary btn-shine">اكتب رأيك</a>
+
+                @if (!isPatient)
+                {
+                    <div class="small text-muted mt-2">
+                        كتابة الرأي بتحتاج حساب مريض. <a asp-controller="Account" asp-action="Register">سجّل حساب</a>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="section section-white">
+        <div class="container">
+            <h2 class="section-title">المواعيد والتواصل</h2>
+
+            <div class="row g-3">
+                <div class="col-md-6 reveal">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">مواعيد العيادة</h5>
+
+                            @if (s is not null && s.WorkDays.Any())
+                            {
+                                var off = Enum.GetValues<DayOfWeek>().Except(s.WorkDays).ToList();
+
+                                <p class="mb-1">@s.WorkDays.ToArabicRange()</p>
+                                <p class="mb-1">من @s.OpenTime.ToArabicTime() إلى @s.CloseTime.ToArabicTime()</p>
+                                <p class="mb-1 text-muted">مدة الكشف @s.SlotMinutes دقيقة</p>
+
+                                @if (off.Any())
+                                {
+                                    <p class="mb-0 text-muted">الإجازة: @off.ToArabicRange()</p>
+                                }
+                            }
+                            else
+                            {
+                                <p class="text-muted mb-0">كلّمنا على الأرقام دي لمعرفة المواعيد.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 reveal">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">تواصل معانا</h5>
+
+                            <p class="mb-2">
+                                <a href="tel:@c.Phone" class="text-decoration-none" dir="ltr">@c.Phone</a>
+                                <span class="text-muted">(اتصال)</span>
+                            </p>
+                            <p class="mb-3">
+                                <a href="@c.WhatsAppLink" target="_blank" rel="noopener" class="text-decoration-none" dir="ltr">@c.WhatsApp</a>
+                                <span class="text-muted">(واتساب)</span>
+                            </p>
+
+                            <p class="mb-3">@c.Address</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="@c.MapLink" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">افتح على الخريطة</a>
+
+                                @if (!string.IsNullOrWhiteSpace(c.FacebookUrl))
+                                {
+                                    <a href="@c.FacebookUrl" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">صفحتنا على فيسبوك</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (c.MapEmbedSrc is not null)
+            {
+                <div class="map-frame mt-3 reveal">
+                    <iframe src="@c.MapEmbedSrc"
+                            title="موقع @c.Name على الخريطة"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            }
+        </div>
+    </section>
+
+    @section Scripts {
+        @if (cases.Any())
+        {
+            <script>
+                (function () {
+                    var cards = Array.prototype.slice.call(document.querySelectorAll('.case-card'));
+                    var modalEl = document.getElementById('caseModal');
+                    if (!cards.length || !modalEl) return;
+
+                    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    var img = document.getElementById('caseModalImg');
+                    var counter = document.getElementById('caseCounter');
+                    var current = 0;
+
+                    function show(i) {
+                        current = (i + cards.length) % cards.length;
+                        img.src = cards[current].dataset.src;
+                        img.alt = 'حالة رقم ' + (current + 1) + ' قبل وبعد العلاج';
+                        counter.textContent = (current + 1) + ' من ' + cards.length;
+                    }
+
+                    cards.forEach(function (card, i) {
+                        card.addEventListener('click', function () { show(i); modal.show(); });
+                    });
+
+                    // في الاتجاه العربي: السهم اللي على اليمين هو "السابق"
+                    document.getElementById('casePrev').addEventListener('click', function () { show(current - 1); });
+                    document.getElementById('caseNext').addEventListener('click', function () { show(current + 1); });
+
+                    document.addEventListener('keydown', function (e) {
+                        if (!modalEl.classList.contains('show')) return;
+                        if (e.key === 'ArrowRight') show(current - 1);
+                        if (e.key === 'ArrowLeft') show(current + 1);
+                    });
+
+                    var more = document.getElementById('casesMore');
+                    if (more) {
+                        more.addEventListener('click', function () {
+                            document.querySelectorAll('.case-extra').forEach(function (el) {
+                                el.classList.remove('d-none');
+                                el.classList.add('reveal', 'is-visible');
+                            });
+                            more.remove();
+                        });
+                    }
+                })();
+            </script>
+        }
+    }

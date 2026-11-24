@@ -1,0 +1,97 @@
+﻿@model IEnumerable<EvoDentalClinic.BLL.DTOs.Appointments.AppointmentDto>
+@using EvoDentalClinic.DAL.Enums
+@{
+    ViewData["Title"] = "الحجوزات";
+    var date = (DateOnly)ViewData["Date"]!;
+    var today = (DateOnly)ViewData["Today"]!;
+    var now = (TimeOnly)ViewData["Now"]!;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">الحجوزات</h2>
+    <a asp-controller="Patients" asp-action="Index" class="btn btn-primary">حجز جديد</a>
+</div>
+
+<form method="get" class="row g-2 mb-2">
+    <div class="col-md-4">
+        <input type="date" name="date" value="@date.ToIso()" class="form-control"
+               onchange="this.form.submit()" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-secondary">عرض</button>
+        @if (date != today)
+        {
+            <a asp-action="Index" class="btn btn-link">النهاردة</a>
+        }
+    </div>
+</form>
+
+<h5 class="mb-3">@date.ToArabicDate()</h5>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-light border">مفيش حجوزات في اليوم ده.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>الميعاد</th>
+                    <th>المريض</th>
+                    <th>الموبايل</th>
+                    <th>الحالة</th>
+                    <th>ملاحظات</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    var started = date < today || (date == today && a.StartTime <= now);
+
+                    <tr class="@(a.Status == AppointmentStatus.Cancelled ? "text-muted" : "")">
+                        <td>@a.StartTime.ToArabicTime()</td>
+                        <td>
+                            <a asp-controller="Patients" asp-action="Details" asp-route-id="@a.PatientId"
+                               class="text-decoration-none">@a.PatientFullName</a>
+                        </td>
+                        <td dir="ltr" class="text-end">@a.PatientPhone</td>
+                        <td><span class="badge @a.Status.ToBadgeClass()">@a.Status.ToArabic()</span></td>
+                        <td>@a.Notes</td>
+                        <td class="text-end text-nowrap">
+                            @if (a.Status == AppointmentStatus.Booked)
+                            {
+                                @if (started)
+                                {
+                                    <form asp-action="SetStatus" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@a.Id" />
+                                        <input type="hidden" name="date" value="@date.ToIso()" />
+                                        <input type="hidden" name="status" value="Completed" />
+                                        <button type="submit" class="btn btn-success btn-sm">تم الكشف</button>
+                                    </form>
+
+                                    <form asp-action="SetStatus" method="post" class="d-inline"
+                                          onsubmit="return confirm('تسجيل إن المريض لم يحضر؟');">
+                                        <input type="hidden" name="id" value="@a.Id" />
+                                        <input type="hidden" name="date" value="@date.ToIso()" />
+                                        <input type="hidden" name="status" value="NoShow" />
+                                        <button type="submit" class="btn btn-outline-warning btn-sm">لم يحضر</button>
+                                    </form>
+                                }
+
+                                <form asp-action="Cancel" method="post" class="d-inline"
+                                      onsubmit="return confirm('متأكد إنك عايز تلغي الحجز؟');">
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <input type="hidden" name="date" value="@date.ToIso()" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">إلغاء</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

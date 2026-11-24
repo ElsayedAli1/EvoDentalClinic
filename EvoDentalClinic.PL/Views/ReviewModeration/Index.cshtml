@@ -1,0 +1,82 @@
+﻿@model EvoDentalClinic.PL.ViewModels.ReviewModerationViewModel
+@using EvoDentalClinic.DAL.Enums
+@{
+    ViewData["Title"] = "آراء المرضى";
+}
+
+<h2 class="mb-3">آراء المرضى</h2>
+
+<ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(Model.Status == ReviewStatus.Pending ? "active" : "")"
+           asp-action="Index" asp-route-status="@ReviewStatus.Pending">
+            قيد المراجعة
+            @if (Model.PendingCount > 0)
+            {
+                <span class="badge bg-danger ms-1">@Model.PendingCount</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(Model.Status == ReviewStatus.Approved ? "active" : "")"
+           asp-action="Index" asp-route-status="@ReviewStatus.Approved">منشورة</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(Model.Status == ReviewStatus.Rejected ? "active" : "")"
+           asp-action="Index" asp-route-status="@ReviewStatus.Rejected">مرفوضة</a>
+    </li>
+</ul>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-light border">مفيش آراء في القسم ده.</div>
+}
+else
+{
+    @foreach (var r in Model.Items)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <partial name="_Stars" model="r.Rating" />
+                        <span class="ms-2 fw-bold">@r.DisplayName</span>
+                        <span class="text-muted small">(@r.UserFullName)</span>
+                    </div>
+                    <div class="text-muted small">@r.CreatedAt.ToCairoDateTime()</div>
+                </div>
+
+                <p class="review-text my-3">@r.Comment</p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    @if (r.Status != ReviewStatus.Approved)
+                    {
+                        <form asp-action="SetStatus" method="post">
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <input type="hidden" name="status" value="@ReviewStatus.Approved" />
+                            <input type="hidden" name="returnTo" value="@Model.Status" />
+                            <button type="submit" class="btn btn-success btn-sm">موافقة ونشر</button>
+                        </form>
+                    }
+
+                    @if (r.Status != ReviewStatus.Rejected)
+                    {
+                        <form asp-action="SetStatus" method="post"
+                              onsubmit="return confirm('متأكد إنك عايز ترفض الرأي ده؟');">
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <input type="hidden" name="status" value="@ReviewStatus.Rejected" />
+                            <input type="hidden" name="returnTo" value="@Model.Status" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                @(r.Status == ReviewStatus.Approved ? "إخفاء" : "رفض")
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<p class="text-muted small">
+    الرفض للكلام المسيء والإعلانات والسبام. لو الآراء السلبية بس هي اللي اتشالت، المتوسط اللي بيظهر للزوار مش هيبقى حقيقي.
+</p>

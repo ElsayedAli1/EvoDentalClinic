@@ -1,0 +1,23 @@
+﻿@model EvoDentalClinic.PL.ViewModels.TreatmentFormViewModel
+@{
+    ViewData["Title"] = "إضافة إجراء علاجي";
+}
+
+<h2 class="mb-1">إضافة إجراء علاجي</h2>
+<p class="text-muted">المريض: <strong>@Model.PatientName</strong></p>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" asp-for="PatientId" />
+
+    <partial name="_TreatmentForm" model="Model" />
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">حفظ</button>
+        <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId"
+           class="btn btn-link">رجوع</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

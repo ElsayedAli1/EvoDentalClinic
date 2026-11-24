@@ -1,0 +1,137 @@
+﻿@model EvoDentalClinic.PL.ViewModels.MedicalHistoryFormViewModel
+@{
+    ViewData["Title"] = "تسجيل التاريخ المرضي";
+}
+
+<h2 class="mb-1">التاريخ المرضي</h2>
+<p class="text-muted">المريض: <strong>@Model.PatientName</strong></p>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="History.PatientId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <div class="card mb-3">
+        <div class="card-header">هل يعاني المريض من:</div>
+        <div class="card-body">
+            <div class="form-check">
+                <input asp-for="History.HasDiabetes" class="form-check-input" />
+                <label class="form-check-label" for="History_HasDiabetes">مرض السكر</label>
+            </div>
+            <div class="form-check">
+                <input asp-for="History.HasHeartDisease" class="form-check-input" />
+                <label class="form-check-label" for="History_HasHeartDisease">أمراض القلب</label>
+            </div>
+            <div class="form-check">
+                <input asp-for="History.HasBloodPressure" class="form-check-input" />
+                <label class="form-check-label" for="History_HasBloodPressure">أمراض ضغط الدم</label>
+            </div>
+            <div class="form-check">
+                <input asp-for="History.HasRespiratoryDisease" class="form-check-input" />
+                <label class="form-check-label" for="History_HasRespiratoryDisease">أمراض التنفس</label>
+            </div>
+            <div class="form-check">
+                <input asp-for="History.HasLiverDisease" class="form-check-input" />
+                <label class="form-check-label" for="History_HasLiverDisease">أمراض الكبد</label>
+            </div>
+            <div class="form-check">
+                <input asp-for="History.HadRadiationOrChemo" class="form-check-input" />
+                <label class="form-check-label" for="History_HadRadiationOrChemo">تعرّض لعلاج إشعاعي أو كيماوي</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">الحساسية والزيارات والتركيبات</div>
+        <div class="card-body">
+            <div class="form-check">
+                <input asp-for="History.HasDrugAllergy" class="form-check-input" data-controls="#allergy-details" />
+                <label class="form-check-label" for="History_HasDrugAllergy">حساسية ضد الأدوية</label>
+            </div>
+            <div id="allergy-details" class="mt-2 mb-3">
+                <input asp-for="History.DrugAllergyType" class="form-control" placeholder="نوع الحساسية" />
+            </div>
+
+            <div class="form-check">
+                <input asp-for="History.HadRecentDentalVisit" class="form-check-input" data-controls="#visit-details" />
+                <label class="form-check-label" for="History_HadRecentDentalVisit">زار طبيب أسنان قريباً</label>
+            </div>
+            <div id="visit-details" class="mt-2 mb-3">
+                <input asp-for="History.RecentVisitReason" class="form-control" placeholder="سبب الزيارة" />
+            </div>
+
+            <div class="form-check">
+                <input asp-for="History.HadPreviousProsthetics" class="form-check-input" data-controls="#prosthetics-details" />
+                <label class="form-check-label" for="History_HadPreviousProsthetics">عمل تركيبات من قبل</label>
+            </div>
+            <div id="prosthetics-details" class="mt-2">
+                <input asp-for="History.ProstheticsType" class="form-control" placeholder="نوع التركيب" />
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">الخلع</div>
+        <div class="card-body">
+            <div class="form-check">
+                <input asp-for="History.HadPreviousExtraction" class="form-check-input" data-controls="#extraction-details" />
+                <label class="form-check-label" for="History_HadPreviousExtraction">خلع ضرس أو سن من قبل</label>
+            </div>
+            <div id="extraction-details" class="mt-2">
+                <p class="text-muted mb-1">هل حدث أثناء الخلع:</p>
+                <div class="form-check">
+                    <input asp-for="History.HadAnestheticAllergy" class="form-check-input" />
+                    <label class="form-check-label" for="History_HadAnestheticAllergy">حساسية من البنج</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="History.HadDelayedHealing" class="form-check-input" />
+                    <label class="form-check-label" for="History_HadDelayedHealing">بطء التئام الجرح</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="History.HadBleeding" class="form-check-input" />
+                    <label class="form-check-label" for="History_HadBleeding">نزيف</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="History.HadFainting" class="form-check-input" />
+                    <label class="form-check-label" for="History_HadFainting">إغماء</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.IsFemale)
+    {
+        <div class="card mb-3">
+            <div class="card-header">للنساء فقط</div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input asp-for="History.IsPregnant" class="form-check-input" />
+                    <label class="form-check-label" for="History_IsPregnant">حامل</label>
+                </div>
+                <div class="form-check">
+                    <input asp-for="History.IsBreastfeeding" class="form-check-input" />
+                    <label class="form-check-label" for="History_IsBreastfeeding">مرضعة</label>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="mb-3">
+        <label asp-for="History.Notes" class="form-label">ملاحظات طبية أخرى</label>
+        <textarea asp-for="History.Notes" class="form-control" rows="4"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">حفظ</button>
+    <a asp-action="Details" asp-route-patientId="@Model.History.PatientId" class="btn btn-link">رجوع</a>
+</form>
+
+@section Scripts {
+    <script>
+        // الخانات التفصيلية بتظهر بس لما الاختيار اللي بيتحكم فيها يتعلّم عليه
+        document.querySelectorAll('[data-controls]').forEach(function (checkbox) {
+            var target = document.querySelector(checkbox.dataset.controls);
+            function sync() { target.classList.toggle('d-none', !checkbox.checked); }
+            checkbox.addEventListener('change', sync);
+            sync();
+        });
+    </script>
+}

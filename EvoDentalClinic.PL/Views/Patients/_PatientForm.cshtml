@@ -1,0 +1,55 @@
+﻿@model EvoDentalClinic.PL.ViewModels.PatientFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" type="tel" class="form-control" placeholder="01012345678" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="DateOfBirth" class="form-label"></label>
+        <input asp-for="DateOfBirth" class="form-control" />
+        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Gender" class="form-label"></label>
+        <select asp-for="Gender" class="form-select">
+            <option value="">اختار...</option>
+            <option value="1">ذكر</option>
+            <option value="2">أنثى</option>
+        </select>
+        <span asp-validation-for="Gender" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="MaritalStatus" class="form-label"></label>
+        <select asp-for="MaritalStatus" class="form-select">
+            <option value="">غير محدد</option>
+            <option value="1">أعزب</option>
+            <option value="2">متزوج</option>
+        </select>
+        <span asp-validation-for="MaritalStatus" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-8">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Job" class="form-label"></label>
+        <input asp-for="Job" class="form-control" />
+        <span asp-validation-for="Job" class="text-danger"></span>
+    </div>
+</div>

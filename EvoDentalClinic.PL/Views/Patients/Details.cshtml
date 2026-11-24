@@ -1,0 +1,231 @@
+﻿@model EvoDentalClinic.PL.ViewModels.PatientFileViewModel
+@using EvoDentalClinic.DAL.Enums
+@using EvoDentalClinic.BLL.DTOs.Account
+@{
+    var p = Model.Patient;
+    ViewData["Title"] = p.FullName;
+    var isDoctor = User.IsInRole("Doctor");
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+    <div>
+        <h2 class="mb-1">@p.FullName</h2>
+        <p class="text-muted mb-0">كود الملف: @p.Code</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-controller="Appointments" asp-action="Book" asp-route-patientId="@p.Id"
+           class="btn btn-primary">حجز موعد</a>
+        <a asp-controller="MedicalHistory" asp-action="Details" asp-route-patientId="@p.Id"
+           class="btn btn-outline-secondary">التاريخ المرضي</a>
+        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-outline-secondary">تعديل البيانات</a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">الموبايل</div>
+                <div dir="ltr" class="text-end">@p.Phone</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">السن</div>
+                <div>@(p.Age?.ToString() ?? "-")</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">النوع</div>
+                <div>@p.Gender.ToArabic()</div>
+            </div>
+            <div class="col-md-2">
+                <div class="text-muted small">الحالة الاجتماعية</div>
+                <div>@(p.MaritalStatus?.ToArabic() ?? "-")</div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-muted small">الوظيفة</div>
+                <div>@(string.IsNullOrWhiteSpace(p.Job) ? "-" : p.Job)</div>
+            </div>
+            <div class="col-12">
+                <div class="text-muted small">العنوان</div>
+                <div>@(string.IsNullOrWhiteSpace(p.Address) ? "-" : p.Address)</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="card mb-4">
+    <div class="card-header">الحساب الأونلاين</div>
+    <div class="card-body">
+        @if (Model.Account.State == AccountState.None)
+        {
+            <span class="text-muted">مفيش حساب أونلاين للمريض ده.</span>
+        }
+        else if (Model.Account.State == AccountState.Pending)
+        {
+            <div class="alert alert-warning">
+                فيه حساب أونلاين اتعمل برقم المريض ده ومحتاج ربط. اتأكد إن صاحب الحساب هو نفس
+                المريض اللي قدامك (بطاقته أو سؤاله عن بياناته) قبل ما تربطه. لو مش هو، احذف الحساب.
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <form asp-controller="PatientAccounts" asp-action="Link" method="post"
+                      onsubmit="return confirm('اتأكدت إن صاحب الحساب هو المريض ده؟');">
+                    <input type="hidden" name="patientId" value="@p.Id" />
+                    <button type="submit" class="btn btn-success btn-sm">ربط الحساب</button>
+                </form>
+
+                <form asp-controller="PatientAccounts" asp-action="Delete" method="post"
+                      onsubmit="return confirm('هيتمسح حساب الدخول ده بس. تكمّل؟');">
+                    <input type="hidden" name="patientId" value="@p.Id" />
+                    <button type="submit" class="btn btn-outline-danger btn-sm">حذف الحساب</button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="mb-2">
+                <span class="badge bg-success">مربوط</span>
+                <span class="ms-2">رقم الدخول: <span dir="ltr">@Model.Account.UserName</span></span>
+                @if (!string.IsNullOrWhiteSpace(Model.Account.Email))
+                {
+                    <span class="ms-2 text-muted" dir="ltr">@Model.Account.Email</span>
+                }
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="PatientAccounts" asp-action="ResetPassword" asp-route-patientId="@p.Id"
+                   class="btn btn-outline-secondary btn-sm">تغيير الباسورد</a>
+
+                <form asp-controller="PatientAccounts" asp-action="Delete" method="post"
+                      onsubmit="return confirm('هيتمسح حساب الدخول بس، وبيانات المريض وحجوزاته وسجله بيفضلوا زي ما هم. تكمّل؟');">
+                    <input type="hidden" name="patientId" value="@p.Id" />
+                    <button type="submit" class="btn btn-outline-danger btn-sm">حذف الحساب</button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">إجمالي التكلفة</div>
+                <div class="fs-4 fw-bold">@Model.TotalCost.ToMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">المدفوع</div>
+                <div class="fs-4 fw-bold text-success">@Model.TotalPaid.ToMoney()</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">المتبقي</div>
+                <div class="fs-4 fw-bold @(Model.Balance > 0 ? "text-danger" : "")">@Model.Balance.ToMoney()</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h4 class="mb-0">سجل العلاج</h4>
+    @if (isDoctor)
+    {
+        <a asp-controller="Treatments" asp-action="Create" asp-route-patientId="@p.Id"
+           class="btn btn-outline-primary btn-sm">إضافة إجراء</a>
+    }
+</div>
+
+@if (!Model.Treatments.Any())
+{
+    <div class="alert alert-light border">لسه ما اتسجلش أي إجراء علاجي.</div>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>التاريخ</th>
+                    <th>السن</th>
+                    <th>الإجراء</th>
+                    <th>التكلفة</th>
+                    <th>المدفوع</th>
+                    <th>المتبقي</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Treatments)
+                {
+                    <tr>
+                        <td>@t.Date.ToString("dd/MM/yyyy")</td>
+                        <td>@t.ToothNumber</td>
+                        <td>@t.Procedure</td>
+                        <td>@t.TotalCost.ToMoney()</td>
+                        <td>@t.TotalPaid.ToMoney()</td>
+                        <td>
+                            @if (t.Balance > 0)
+                            {
+                                <span class="text-danger">@t.Balance.ToMoney()</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">مسدد</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-controller="Payments" asp-action="Create" asp-route-treatmentId="@t.Id"
+                               class="btn @(t.Balance > 0 ? "btn-success" : "btn-outline-secondary") btn-sm">
+                                @(t.Balance > 0 ? "دفعة" : "الدفعات")
+                            </a>
+                            @if (isDoctor)
+                            {
+                                <a asp-controller="Treatments" asp-action="Edit" asp-route-id="@t.Id"
+                                   class="btn btn-outline-secondary btn-sm">تعديل</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<h4 class="mb-2">الحجوزات</h4>
+
+@if (!Model.Appointments.Any())
+{
+    <div class="alert alert-light border">مفيش حجوزات للمريض ده.</div>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table align-middle bg-white">
+            <thead>
+                <tr>
+                    <th>اليوم</th>
+                    <th>الميعاد</th>
+                    <th>الحالة</th>
+                    <th>ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Appointments)
+                {
+                    <tr class="@(a.Status == AppointmentStatus.Cancelled ? "text-muted" : "")">
+                        <td>@a.Date.ToArabicDate()</td>
+                        <td>@a.StartTime.ToArabicTime()</td>
+                        <td><span class="badge @a.Status.ToBadgeClass()">@a.Status.ToArabic()</span></td>
+                        <td>@a.Notes</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<a asp-action="Index" class="btn btn-link">رجوع للمرضى</a>
